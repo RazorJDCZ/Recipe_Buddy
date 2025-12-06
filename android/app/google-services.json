@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "950210039144",
+    "project_id": "recipebuddy-48b9f",
+    "storage_bucket": "recipebuddy-48b9f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:950210039144:android:1b83d4d78b0df495eb1add",
+        "android_client_info": {
+          "package_name": "com.example.recipe_buddy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdf7-l1sXqjtG6SfvNst9Vy4WsPOAUkuc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

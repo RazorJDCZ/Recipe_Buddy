@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/recipe_card.dart';
 import 'generate_recipe_screen.dart';
 
@@ -21,6 +22,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    
+    // 🔥 PRUEBA TEMPORAL DE FIREBASE
+    FirebaseFirestore.instance
+        .collection('test')
+        .add({'message': 'Hola Isa!'});
   }
 
   @override
@@ -198,3 +204,4 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 }
+
