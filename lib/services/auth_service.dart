@@ -75,7 +75,9 @@ class AuthService {
       case "user-disabled":
         return "This account has been disabled.";
       case "user-not-found":
-        return "No user found with this email.";
+        throw UserNotRegisteredException("Usuario no registrado. ¡Crea una cuenta!");
+      case "invalid-credential":
+        throw UserNotRegisteredException("Usuario no registrado. ¡Crea una cuenta!");
       case "wrong-password":
         return "Incorrect password.";
       case "email-already-in-use":
@@ -88,4 +90,12 @@ class AuthService {
         return e.message ?? "Authentication error.";
     }
   }
+}
+
+// Excepción personalizada para usuario no registrado
+class UserNotRegisteredException implements Exception {
+  final String message;
+  UserNotRegisteredException(this.message);
+  @override
+  String toString() => message;
 }

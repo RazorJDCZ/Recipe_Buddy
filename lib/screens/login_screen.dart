@@ -42,6 +42,39 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
         MaterialPageRoute(builder: (_) => const HomePage()),
       );
+    } on UserNotRegisteredException catch (e) {
+      setState(() => loading = false);
+      
+      // Mostrar diálogo con opción de ir a registro
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Usuario no registrado"),
+          content: Text(e.message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                );
+              },
+              child: Text(
+                "Crear cuenta",
+                style: TextStyle(
+                  color: mint,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     } catch (e) {
       setState(() => loading = false);
 
