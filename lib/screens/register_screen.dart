@@ -46,9 +46,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await AuthService().register(email, password);
       setState(() => loading = false);
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+      // Mostrar diálogo de cuenta creada exitosamente
+      if (!mounted) return;
+      
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: mint, size: 28),
+              const SizedBox(width: 10),
+              const Text("¡Cuenta creada!"),
+            ],
+          ),
+          content: const Text("Tu cuenta ha sido creada exitosamente. Bienvenido a Recipe Buddy."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Cerrar diálogo
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const HomePage()),
+                );
+              },
+              child: Text(
+                "Continuar",
+                style: TextStyle(
+                  color: mint,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     } catch (e) {
       setState(() => loading = false);

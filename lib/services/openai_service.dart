@@ -3,15 +3,21 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class OpenAIService {
-  static const String _apiKey = String.fromEnvironment("OPENAI_KEY");
-
+  // Leer API key desde .env
+  static String get _apiKey => dotenv.env['OPENAI_API_KEY'] ?? '';
 
   // ---------------------------------------------------------
   // 1️⃣ GENERAR TEXTO DE RECETA — SOLO JSON PURO
   // ---------------------------------------------------------
   Future<String?> generateRecipeText(String ingredients) async {
+    if (_apiKey.isEmpty) {
+      print("❌ ERROR: OPENAI_API_KEY no está definida en .env");
+      return null;
+    }
+
     final url = Uri.parse("https://api.openai.com/v1/chat/completions");
 
     final response = await http.post(
@@ -85,6 +91,11 @@ class OpenAIService {
   // 3️⃣ GENERAR IMAGEN — DEVUELVE BASE64
   // ---------------------------------------------------------
   Future<String?> generateImage(String prompt) async {
+    if (_apiKey.isEmpty) {
+      print("❌ ERROR: OPENAI_API_KEY no está definida en .env");
+      return null;
+    }
+
     final url = Uri.parse("https://api.openai.com/v1/images/generations");
 
     final response = await http.post(
@@ -94,9 +105,10 @@ class OpenAIService {
         "Authorization": "Bearer $_apiKey",
       },
       body: jsonEncode({
-        "model": "gpt-image-1",
+        "model": "dall-e-3",
         "prompt": "Professional food photography of: $prompt",
-        "size": "1024x1024"
+        "size": "1024x1024",
+        "response_format": "b64_json"
       }),
     );
 
@@ -105,8 +117,8 @@ class OpenAIService {
       return null;
     }
 
-    final data = jsonDecode(response.body);
-    return data["data"][0]["b64_json"];
+    final jsonResponse = jsonDecode(response.body);
+    return jsonResponse["data"][0]["b64_json"];
   }
 
   // ---------------------------------------------------------
