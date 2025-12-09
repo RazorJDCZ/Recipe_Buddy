@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:recipe_buddy/models/recipe.dart';
-import 'package:recipe_buddy/widgets/ingredient_tile.dart';
-import 'package:recipe_buddy/widgets/step_tile.dart';
 import '../services/recipe_service.dart';
 
 class RecipeDetailsScreen extends StatefulWidget {
@@ -14,9 +13,9 @@ class RecipeDetailsScreen extends StatefulWidget {
 }
 
 class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
-  final Color mint = const Color(0xFF4BC9A8);
-  final Color mintSoft = const Color(0xFFDFF7F1);
-  final Color dark = const Color(0xFF1B1D22);
+  final Color primary = const Color(0xFF06F957);
+  final Color backgroundDark = const Color(0xFF0F2316);
+  final Color cardBgDark = const Color(0xFF183521);
 
   int selectedTab = 0;
   bool saving = false;
@@ -28,267 +27,472 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: backgroundDark,
           body: SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(r.title),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // HEADER CON BACK
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Icon(
+                            Icons.arrow_back_ios_new,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            r.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 20), // Espaciador para centrar el título
+                      ],
+                    ),
+                  ),
 
-                const SizedBox(height: 14),
-                _buildImage(r.imageUrl),
+                  // IMAGEN
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      height: 240,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade800,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: _buildImage(r.imageUrl),
+                      ),
+                    ),
+                  ),
 
-                const SizedBox(height: 16),
-                _buildInfo(r),
+                  const SizedBox(height: 20),
 
-                const SizedBox(height: 22),
-                _buildTabs(),
+                  // BOTÓN GUARDAR
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: GestureDetector(
+                      onTap: () => _toggleFavorite(r),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: cardBgDark,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                        ),
+                        child: Icon(
+                          r.isFavorite ? Icons.bookmark : Icons.bookmark_border,
+                          color: r.isFavorite ? primary : Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ),
 
-                const SizedBox(height: 12),
-                Expanded(child: _buildContent(r)),
+                  const SizedBox(height: 16),
 
-                _buildFavoriteButton(r),
-              ],
+                  // TITULO
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      r.title,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // INFO BAR (2 CARDS EN FILA)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: cardBgDark,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.1),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Preparación",
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 12,
+                                    color: Colors.white.withOpacity(0.6),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  r.time,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: cardBgDark,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.1),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Cocción",
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 12,
+                                    color: Colors.white.withOpacity(0.6),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  r.difficulty,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // PORCIONES (CARD COMPLETA)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cardBgDark,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Porciones",
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.6),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            r.portions,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // TABS (Ingredientes / Pasos)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => setState(() => selectedTab = 0),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: selectedTab == 0 ? primary : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              "Ingredientes",
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: selectedTab == 0
+                                    ? Colors.black87
+                                    : Colors.white.withOpacity(0.6),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => setState(() => selectedTab = 1),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: selectedTab == 1 ? primary : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              "Pasos",
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: selectedTab == 1
+                                    ? Colors.black87
+                                    : Colors.white.withOpacity(0.6),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // CONTENIDO (Ingredientes o Pasos)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: selectedTab == 0
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: r.ingredients.map((ingredient) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: primary,
+                                          width: 2,
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Icon(
+                                        Icons.check,
+                                        color: primary,
+                                        size: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        ingredient,
+                                        style: GoogleFonts.spaceGrotesk(
+                                          fontSize: 14,
+                                          color: Colors.white.withOpacity(0.8),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: r.steps.asMap().entries.map((entry) {
+                              int stepNum = entry.key + 1;
+                              String step = entry.value;
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 14),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: BoxDecoration(
+                                        color: primary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          stepNum.toString(),
+                                          style: GoogleFonts.spaceGrotesk(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        step,
+                                        style: GoogleFonts.spaceGrotesk(
+                                          fontSize: 13,
+                                          color: Colors.white.withOpacity(0.8),
+                                          height: 1.6,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // BOTÓN FAVORITO
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SizedBox(
+                      height: 56,
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: saving ? null : () => _toggleFavorite(r),
+                        child: Text(
+                          r.isFavorite ? "Quitar de Favoritos 💔" : "Guardar en Favoritos ❤",
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
         ),
 
+        // LOADING OVERLAY
         if (saving)
           Container(
-            color: Colors.black.withOpacity(0.40),
-            child: const Center(
-              child: CircularProgressIndicator(color: Colors.white),
+            color: Colors.black.withOpacity(0.7),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(primary),
+                    strokeWidth: 3,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    "Guardando...",
+                    style: GoogleFonts.spaceGrotesk(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
       ],
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // HEADER
-  // ---------------------------------------------------------------------------
-  Widget _buildHeader(String title) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.only(top: 24, bottom: 22),
-      decoration: BoxDecoration(
-        color: mintSoft,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: mint.withOpacity(0.25),
-            blurRadius: 18,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            left: 12,
-            child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Icon(Icons.arrow_back_ios_new, color: dark, size: 22),
-            ),
-          ),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: "Poppins",
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: dark,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // IMAGE
-  // ---------------------------------------------------------------------------
   Widget _buildImage(String url) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        height: 220,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.07),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            )
-          ],
+    if (url.isEmpty || !url.contains('firebasestorage')) {
+      return Center(
+        child: Icon(
+          Icons.image,
+          size: 80,
+          color: Colors.grey.shade700,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: url.isEmpty
-              ? const Center(child: Icon(Icons.image, size: 60))
-              : Image.network(
-                  url,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  errorBuilder: (_, __, ___) =>
-                      const Center(child: Icon(Icons.broken_image, size: 50)),
-                  loadingBuilder: (_, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    );
-                  },
-                ),
+      );
+    }
+
+    return Image.network(
+      url,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      errorBuilder: (_, __, ___) => Center(
+        child: Icon(
+          Icons.broken_image,
+          size: 80,
+          color: Colors.grey.shade700,
         ),
       ),
+      loadingBuilder: (_, child, progress) {
+        if (progress == null) return child;
+        return const Center(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        );
+      },
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // INFO
-  // ---------------------------------------------------------------------------
-  Widget _buildInfo(Recipe r) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          Icon(Icons.timer, size: 20, color: mint),
-          const SizedBox(width: 6),
-          Text(r.time, style: const TextStyle(fontSize: 14)),
-
-          const SizedBox(width: 16),
-          Icon(Icons.local_fire_department, size: 20, color: mint),
-          const SizedBox(width: 6),
-          Text(r.difficulty, style: const TextStyle(fontSize: 14)),
-
-          const SizedBox(width: 16),
-          Icon(Icons.person, size: 20, color: mint),
-          const SizedBox(width: 6),
-          Text("${r.portions} servings", style: const TextStyle(fontSize: 14)),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // TABS
-  // ---------------------------------------------------------------------------
-  Widget _buildTabs() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          _buildTab("Ingredients", 0),
-          const SizedBox(width: 30),
-          _buildTab("Steps", 1),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTab(String text, int index) {
-    final active = selectedTab == index;
-
-    return GestureDetector(
-      onTap: () => setState(() => selectedTab = index),
-      child: Column(
-        children: [
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: active ? mint : Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Container(
-            height: 3,
-            width: active ? 90 : 0,
-            decoration: BoxDecoration(
-              color: active ? mint : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // CONTENT
-  // ---------------------------------------------------------------------------
-  Widget _buildContent(Recipe r) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (selectedTab == 0)
-            ...r.ingredients
-                .map((ing) => IngredientTile(text: ing, mint: mint))
-                .toList()
-          else
-            ...r.steps.asMap().entries.map(
-                  (e) => StepTile(number: e.key + 1, text: e.value),
-                ),
-          const SizedBox(height: 100),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // FAVORITE BUTTON
-  // ---------------------------------------------------------------------------
-  Widget _buildFavoriteButton(Recipe r) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
-          )
-        ],
-      ),
-      child: SizedBox(
-        height: 54,
-        width: double.infinity,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: mint,
-            elevation: 6,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          onPressed: saving ? null : () => _toggleFavorite(r),
-          child: Text(
-            r.isFavorite ? "Remove Favorite 💔" : "Save to Favorites ❤️",
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // FAVORITE TOGGLE LOGIC
-  // ---------------------------------------------------------------------------
   Future<void> _toggleFavorite(Recipe r) async {
     setState(() => saving = true);
 
@@ -303,7 +507,8 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            r.isFavorite ? "Added to favorites ❤️" : "Removed from favorites 💔",
+            r.isFavorite ? "Agregado a favoritos ❤" : "Removido de favoritos 💔",
+            style: GoogleFonts.spaceGrotesk(),
           ),
         ),
       );
@@ -311,8 +516,13 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
       setState(() => saving = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating favorite: $e")),
-      );
-    }
-  }
+        SnackBar(
+          content: Text(
+            "Error actualizando favorito: $e",
+            style: GoogleFonts.spaceGrotesk(),
+          ),
+        ),
+    );
+}
+}
 }

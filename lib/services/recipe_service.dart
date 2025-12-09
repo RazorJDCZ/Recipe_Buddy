@@ -6,9 +6,9 @@ class RecipeService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // ---------------------------------------------------------------------------
-  // STREAM: TODAS LAS RECETAS (CON FAVORITOS POR USUARIO)
-  // ---------------------------------------------------------------------------
+  
+  // TODAS LAS RECETAS
+  
   Stream<List<Recipe>> listenAllRecipes() {
     final String uid = _auth.currentUser!.uid;
 
@@ -38,9 +38,9 @@ class RecipeService {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // STREAM: SOLO FAVORITOS DEL USUARIO
-  // ---------------------------------------------------------------------------
+  
+  // SOLO FAVORITOS DEL USUARIO
+  
   Stream<List<Recipe>> listenFavoriteRecipes() {
     final String uid = _auth.currentUser!.uid;
 
@@ -69,9 +69,9 @@ class RecipeService {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // ⭐ GUARDAR RECETA GENERADA POR IA
-  // ---------------------------------------------------------------------------
+  
+  // GUARDAR RECETA GENERADA POR IA
+  
   Future<String> addRecipeFromAI(Map<String, dynamic> data) async {
     try {
       final recipeData = {
@@ -89,17 +89,17 @@ class RecipeService {
 
       final docRef = await _db.collection("recipes").add(recipeData);
 
-      print("🔥 AI recipe saved → ID: ${docRef.id}");
+      print("AI recipe saved → ID: ${docRef.id}");
       return docRef.id;
     } catch (e) {
-      print("❌ ERROR saving AI recipe: $e");
+      print("ERROR saving AI recipe: $e");
       rethrow;
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // ❤️ AGREGAR / QUITAR FAVORITO POR USUARIO
-  // ---------------------------------------------------------------------------
+  
+  // AGREGAR / QUITAR FAVORITO POR USUARIO
+  
   Future<void> toggleFavorite(String recipeId, bool isCurrentlyFav) async {
     final String uid = _auth.currentUser!.uid;
 
@@ -108,16 +108,16 @@ class RecipeService {
 
     try {
       if (isCurrentlyFav) {
-        // ❌ quitar favorito
+        // quitar favorito
         await favRef.delete();
-        print("💔 Removed from favorites: $recipeId");
+        print("Removed from favorites: $recipeId");
       } else {
-        // ❤️ agregar favorito
+        // agregar favorito
         await favRef.set({"addedAt": FieldValue.serverTimestamp()});
-        print("❤️ Added to favorites: $recipeId");
+        print("Added to favorites: $recipeId");
       }
     } catch (e) {
-      print("❌ ERROR toggling favorite: $e");
+      print("ERROR toggling favorite: $e");
       rethrow;
     }
   }

@@ -8,9 +8,9 @@ class OpenAIService {
   static const String _apiKey = String.fromEnvironment("OPENAI_KEY");
 
 
-  // ---------------------------------------------------------
-  // 1️⃣ GENERAR TEXTO DE RECETA — SOLO JSON PURO
-  // ---------------------------------------------------------
+  
+  // GENERAR TEXTO DE RECETA 
+  
   Future<String?> generateRecipeText(String ingredients) async {
     final url = Uri.parse("https://api.openai.com/v1/chat/completions");
 
@@ -59,9 +59,9 @@ class OpenAIService {
     return raw;
   }
 
-  // ---------------------------------------------------------
-  // 2️⃣ PARSEAR JSON Y GARANTIZAR QUE NUNCA FALLE
-  // ---------------------------------------------------------
+  
+  // PARSEAR JSON Y GARANTIZAR QUE NUNCA FALLE
+  
   Map<String, dynamic> parseRecipeJson(String text) {
     try {
       final decoded = jsonDecode(text);
@@ -81,9 +81,9 @@ class OpenAIService {
     }
   }
 
-  // ---------------------------------------------------------
-  // 3️⃣ GENERAR IMAGEN — DEVUELVE BASE64
-  // ---------------------------------------------------------
+  
+  // GENERAR IMAGEN
+  
   Future<String?> generateImage(String prompt) async {
     final url = Uri.parse("https://api.openai.com/v1/images/generations");
 
@@ -109,9 +109,9 @@ class OpenAIService {
     return data["data"][0]["b64_json"];
   }
 
-  // ---------------------------------------------------------
-  // 4️⃣ SUBIR BASE64 A FIREBASE STORAGE
-  // ---------------------------------------------------------
+  
+  // SUBIR BASE64 A FIREBASE STORAGE
+  
   Future<String?> uploadImage(String title, String base64) async {
     try {
       final bytes = Uint8List.fromList(base64Decode(base64));

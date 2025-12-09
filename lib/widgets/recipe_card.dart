@@ -37,7 +37,7 @@ class RecipeCard extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                color: Colors.grey.shade200,
+                color: const Color.fromARGB(255, 238, 238, 238),
               ),
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),

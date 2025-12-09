@@ -43,13 +43,13 @@ class Recipe {
       imageUrl: data["imageUrl"] ?? "",
       imageGenerated: data["imageGenerated"] ?? false,
 
-      // ⚠️ YA NO LEEMOS FAVORITES DE FIRESTORE
+      
       // Este valor será asignado posteriormente por RecipeService.listenAllRecipes()
       isFavorite: false,
     );
   }
 
-  // Convertir Recipe → Firestore
+  // Convertir Recipe a Firestore
   Map<String, dynamic> toFirestore() {
     return {
       "title": title,
@@ -61,7 +61,7 @@ class Recipe {
       "imageUrl": imageUrl,
       "imageGenerated": imageGenerated,
 
-      // ⚠️ YA NO GUARDAMOS isFavorite AQUÍ
+      
     };
   }
 }
