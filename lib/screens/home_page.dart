@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../providers/auth_provider.dart' as local_auth;
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
 import './generate_recipe_screen.dart';
@@ -16,7 +18,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int selectedTab = 0;
 
-  // Colores actualizados para el nuevo diseño
   final Color primary = const Color(0xFF06F957);
   final Color backgroundDark = const Color(0xFF0A1612);
   final Color cardBgDark = const Color(0xFF152820);
@@ -28,7 +29,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Escuchar cambios en el texto de búsqueda
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase().trim();
@@ -38,12 +38,14 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<local_auth.AuthProvider>(context);
+
     return Scaffold(
       backgroundColor: backgroundDark,
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(),
+            _buildHeader(auth),
             const SizedBox(height: 20),
             _buildSearchBar(),
             const SizedBox(height: 20),
@@ -55,16 +57,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  
-  // HEADER con ícono de perfil en la derecha
-  
-  Widget _buildHeader() {
+  // HEADER ------------------------------------------------
+  Widget _buildHeader(local_auth.AuthProvider auth) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Título
           Text(
             "Mis Recetas",
             style: GoogleFonts.spaceGrotesk(
@@ -73,10 +72,8 @@ class _HomePageState extends State<HomePage> {
               color: Colors.white,
             ),
           ),
-          
-          // Botón de perfil
           GestureDetector(
-            onTap: _showProfileOptions,
+            onTap: () => _showProfileOptions(auth),
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -95,9 +92,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  
-  // SEARCH BAR 
-  
+  // SEARCH BAR --------------------------------------------
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -123,22 +118,19 @@ class _HomePageState extends State<HomePage> {
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         ),
       ),
     );
   }
 
-  
-  // TAB CONTENT
-  
+  // TAB CONTENT -------------------------------------------
   Widget _buildTabContent() {
     return selectedTab == 0 ? _allRecipesStream() : _favoritesStream();
   }
 
-  
-  // ALL RECIPES 
-  
+  // ALL RECIPES -------------------------------------------
   Widget _allRecipesStream() {
     return StreamBuilder<List<Recipe>>(
       stream: _service.listenAllRecipes(),
@@ -153,27 +145,18 @@ class _HomePageState extends State<HomePage> {
 
         var recipes = snapshot.data!;
 
-        // Filtrar recetas según la búsqueda
         if (_searchQuery.isNotEmpty) {
-          recipes = recipes.where((recipe) {
-            // Buscar en el título
-            final titleMatch = recipe.title.toLowerCase().contains(_searchQuery);
-            
-            // Buscar en los ingredientes
-            final ingredientsMatch = recipe.ingredients.any(
-              (ingredient) => ingredient.toLowerCase().contains(_searchQuery),
-            );
-            
-            return titleMatch || ingredientsMatch;
+          recipes = recipes.where((r) {
+            return r.title.toLowerCase().contains(_searchQuery) ||
+                r.ingredients.any(
+                    (ingredient) => ingredient.toLowerCase().contains(_searchQuery));
           }).toList();
         }
 
         if (recipes.isEmpty) {
-          return _emptyState(
-            _searchQuery.isNotEmpty
-                ? "No se encontraron recetas\ncon '$_searchQuery'"
-                : "No hay recetas aún.\n¡Crea tu primera receta!",
-          );
+          return _emptyState(_searchQuery.isNotEmpty
+              ? "No se encontraron recetas\ncon '$_searchQuery'"
+              : "No hay recetas aún.\n¡Crea tu primera receta!");
         }
 
         return _recipeGrid(recipes);
@@ -181,9 +164,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  
-  // FAVORITES 
-  
+  // FAVORITES ---------------------------------------------
   Widget _favoritesStream() {
     return StreamBuilder<List<Recipe>>(
       stream: _service.listenFavoriteRecipes(),
@@ -198,27 +179,18 @@ class _HomePageState extends State<HomePage> {
 
         var favorites = snapshot.data!;
 
-        // Filtrar favoritos según la búsqueda
         if (_searchQuery.isNotEmpty) {
-          favorites = favorites.where((recipe) {
-            // Buscar en el título
-            final titleMatch = recipe.title.toLowerCase().contains(_searchQuery);
-            
-            // Buscar en los ingredientes
-            final ingredientsMatch = recipe.ingredients.any(
-              (ingredient) => ingredient.toLowerCase().contains(_searchQuery),
-            );
-            
-            return titleMatch || ingredientsMatch;
+          favorites = favorites.where((r) {
+            return r.title.toLowerCase().contains(_searchQuery) ||
+                r.ingredients.any(
+                    (ingredient) => ingredient.toLowerCase().contains(_searchQuery));
           }).toList();
         }
 
         if (favorites.isEmpty) {
-          return _emptyState(
-            _searchQuery.isNotEmpty
-                ? "No se encontraron favoritas\ncon '$_searchQuery'"
-                : "Aún no tienes favoritas.\n❤ Marca tus recetas favoritas",
-          );
+          return _emptyState(_searchQuery.isNotEmpty
+              ? "No se encontraron favoritas\ncon '$_searchQuery'"
+              : "Aún no tienes favoritas.\n❤ Marca tus recetas favoritas");
         }
 
         return _recipeGrid(favorites);
@@ -226,9 +198,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  
-  // GRID VIEW (2 columnas como en la imagen)
-  
+  // GRID VIEW ---------------------------------------------
   Widget _recipeGrid(List<Recipe> recipes) {
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -240,25 +210,18 @@ class _HomePageState extends State<HomePage> {
         mainAxisSpacing: 16,
       ),
       itemCount: recipes.length,
-      itemBuilder: (context, index) {
-        return RecipeCard(recipe: recipes[index]);
-      },
+      itemBuilder: (context, index) => RecipeCard(recipe: recipes[index]),
     );
   }
 
-  
-  // EMPTY STATE
-  
+  // EMPTY STATE -------------------------------------------
   Widget _emptyState(String text) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.restaurant_outlined,
-            size: 80,
-            color: Colors.white.withOpacity(0.2),
-          ),
+          Icon(Icons.restaurant_outlined,
+              size: 80, color: Colors.white.withOpacity(0.2)),
           const SizedBox(height: 16),
           Text(
             text,
@@ -275,9 +238,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  
-  // BOTTOM NAVIGATION BAR 
-  
+  // NAV BAR -----------------------------------------------
   Widget _buildBottomNavBar() {
     return Container(
       decoration: BoxDecoration(
@@ -296,22 +257,9 @@ class _HomePageState extends State<HomePage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _navBarItem(
-                icon: Icons.restaurant_menu,
-                label: "Recetas",
-                index: 0,
-              ),
-              _navBarItem(
-                icon: Icons.add_circle,
-                label: "Generar",
-                index: 2,
-                isCenter: true,
-              ),
-              _navBarItem(
-                icon: Icons.favorite,
-                label: "Favoritos",
-                index: 1,
-              ),
+              _navBarItem(Icons.restaurant_menu, "Recetas", 0),
+              _navBarItem(Icons.add_circle, "Generar", 2, isCenter: true),
+              _navBarItem(Icons.favorite, "Favoritos", 1),
             ],
           ),
         ),
@@ -319,24 +267,18 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _navBarItem({
-    required IconData icon,
-    required String label,
-    required int index,
-    bool isCenter = false,
-  }) {
+  Widget _navBarItem(IconData icon, String label, int index,
+      {bool isCenter = false}) {
     final isActive = selectedTab == index;
 
     return GestureDetector(
       onTap: () {
         if (isCenter) {
-          // Navegar a generar receta
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const GenerateRecipeScreen()),
           );
         } else {
-          // Cambiar tab (0 = Recetas, 1 = Favoritos)
           setState(() => selectedTab = index);
         }
       },
@@ -375,23 +317,20 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  
-  // PROFILE OPTIONS 
-  
-  void _showProfileOptions() {
+  // PROFILE OPTIONS ---------------------------------------
+  void _showProfileOptions(local_auth.AuthProvider auth) {
     showModalBottomSheet(
       context: context,
       backgroundColor: cardBgDark,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => SafeArea(
+      builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
               Container(
                 width: 40,
                 height: 4,
@@ -402,7 +341,6 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 24),
 
-              // User info (solo correo)
               Row(
                 children: [
                   Container(
@@ -425,7 +363,7 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      FirebaseAuth.instance.currentUser?.email ?? "Usuario",
+                      auth.user?.email ?? "Usuario",
                       style: GoogleFonts.spaceGrotesk(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -438,9 +376,7 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 24),
 
-              // Logout button
               ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
@@ -462,10 +398,10 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 onTap: () async {
-                  Navigator.pop(context);
+                  // Preguntamos si quiere salir
                   final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
+                    context: sheetContext,
+                    builder: (dialogContext) => AlertDialog(
                       backgroundColor: cardBgDark,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -479,18 +415,24 @@ class _HomePageState extends State<HomePage> {
                       ),
                       content: Text(
                         "¿Estás seguro que deseas salir?",
-                        style: GoogleFonts.spaceGrotesk(color: Colors.white70),
+                        style: GoogleFonts.spaceGrotesk(
+                          color: Colors.white70,
+                        ),
                       ),
                       actions: [
                         TextButton(
-                          onPressed: () => Navigator.pop(context, false),
+                          onPressed: () =>
+                              Navigator.pop(dialogContext, false),
                           child: Text(
                             "Cancelar",
-                            style: GoogleFonts.spaceGrotesk(color: Colors.white70),
+                            style: GoogleFonts.spaceGrotesk(
+                              color: Colors.white70,
+                            ),
                           ),
                         ),
                         TextButton(
-                          onPressed: () => Navigator.pop(context, true),
+                          onPressed: () =>
+                              Navigator.pop(dialogContext, true),
                           child: Text(
                             "Salir",
                             style: GoogleFonts.spaceGrotesk(
@@ -504,9 +446,11 @@ class _HomePageState extends State<HomePage> {
                   );
 
                   if (confirm == true) {
-                    await FirebaseAuth.instance.signOut();
+                    await auth.signOut();
                     if (!mounted) return;
-                    Navigator.pushReplacementNamed(context, "/login");
+                    // cerramos el bottom sheet
+                    Navigator.pop(sheetContext);
+                    // NO navegamos manualmente; AuthGate mostrará LoginScreen
                   }
                 },
               ),
@@ -521,5 +465,5 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
-}
+  }
 }

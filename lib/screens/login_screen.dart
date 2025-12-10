@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/auth_service.dart';
+import 'package:provider/provider.dart';
+
+import '../services/auth_service.dart'; 
+import '../providers/auth_provider.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
-import 'home_page.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  bool loading = false;
   bool obscurePassword = true;
 
   Future<void> _login() async {
@@ -28,75 +29,32 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      _showErrorSnackBar("Por favor completa todos los campos");
+      _showSnack("Por favor completa todos los campos");
       return;
     }
 
-    setState(() => loading = true);
+    final auth = Provider.of<AuthProvider>(context, listen: false);
 
-    try {
-      await AuthService().login(email, password);
-      setState(() => loading = false);
+    final ok = await auth.login(email, password);
 
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-      );
-    } on UserNotRegisteredException catch (e) {
-      setState(() => loading = false);
+    if (!mounted) return;
 
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: cardBgDark,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(
-            "Usuario no registrado",
-            style: GoogleFonts.spaceGrotesk(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            e.message,
-            style: GoogleFonts.spaceGrotesk(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "Cancelar",
-                style: GoogleFonts.spaceGrotesk(color: Colors.white70),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                );
-              },
-              child: Text(
-                "Crear cuenta",
-                style: GoogleFonts.spaceGrotesk(
-                  color: primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      setState(() => loading = false);
-      _showErrorSnackBar("Error al iniciar sesión: $e");
+    if (ok) {
+      // ❌ NO navegamos manualmente.
+      // AuthGate escuchará auth.user y cambiará a HomePage automáticamente.
+      _showSnack("Sesión iniciada correctamente");
+    } else {
+      if (auth.errorMessage is UserNotRegisteredException ||
+          auth.errorMessage?.contains("Usuario no registrado") == true) {
+        // Mostrar diálogo para crear cuenta
+        _showUserNotRegisteredDialog(auth.errorMessage ?? "Usuario no registrado. ¡Crea una cuenta!");
+      } else {
+        _showSnack(auth.errorMessage ?? "Error al iniciar sesión");
+      }
     }
   }
 
-  void _showErrorSnackBar(String message) {
+  void _showSnack(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -109,8 +67,57 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  void _showUserNotRegisteredDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: cardBgDark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          "Usuario no registrado",
+          style: GoogleFonts.spaceGrotesk(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          message,
+          style: GoogleFonts.spaceGrotesk(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "Cancelar",
+              style: GoogleFonts.spaceGrotesk(color: Colors.white70),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RegisterScreen()),
+              );
+            },
+            child: Text(
+              "Crear cuenta",
+              style: GoogleFonts.spaceGrotesk(
+                color: primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    final loading = auth.loading;
+
     return Stack(
       children: [
         Scaffold(
@@ -395,5 +402,5 @@ class _LoginScreenState extends State<LoginScreen> {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
-}
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import 'home_page.dart';
 import 'login_screen.dart';
 
@@ -20,124 +21,109 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final passwordController = TextEditingController();
   final passwordConfirmController = TextEditingController();
 
-  bool loading = false;
   bool showPassword = false;
   bool showConfirmPassword = false;
 
-  // Validar email
   bool isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    final emailRegex =
+        RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     return emailRegex.hasMatch(email);
   }
 
   Future<void> _register() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
     final email = emailController.text.trim();
-    final password = passwordController.text;
-    final confirm = passwordConfirmController.text;
+    final pass = passwordController.text.trim();
+    final confirm = passwordConfirmController.text.trim();
 
-    // Validar campos vacíos
+    // VALIDACIONES
     if (email.isEmpty) {
-      _showErrorDialog("Correo requerido", "Por favor ingresa tu correo electrónico");
+      _showError("Correo requerido", "Por favor ingresa tu correo electrónico");
       return;
     }
-
-    if (password.isEmpty) {
-      _showErrorDialog("Contraseña requerida", "Por favor ingresa una contraseña");
-      return;
-    }
-
-    if (confirm.isEmpty) {
-      _showErrorDialog("Confirmación requerida", "Por favor confirma tu contraseña");
-      return;
-    }
-
-    // Validar email
     if (!isValidEmail(email)) {
-      _showErrorDialog("Email inválido", "Por favor ingresa un correo electrónico válido");
+      _showError("Email inválido", "Por favor ingresa un correo válido");
+      return;
+    }
+    if (pass.isEmpty) {
+      _showError("Contraseña requerida", "Por favor ingresa una contraseña");
+      return;
+    }
+    if (pass.length < 6) {
+      _showError("Contraseña muy corta", "Debe tener al menos 6 caracteres");
+      return;
+    }
+    if (confirm.isEmpty) {
+      _showError("Confirmación requerida", "Por favor confirma tu contraseña");
+      return;
+    }
+    if (pass != confirm) {
+      _showError("Contraseñas no coinciden",
+          "Las contraseñas ingresadas no son iguales");
       return;
     }
 
-    // Validar longitud de contraseña
-    if (password.length < 6) {
-      _showErrorDialog(
-        "Contraseña muy corta",
-        "La contraseña debe tener al menos 6 caracteres",
-      );
+    // EJECUTAR REGISTRO
+    final ok = await auth.register(email, pass);
+
+    if (!ok) {
+      _showError("Error", auth.errorMessage ?? "Ocurrió un error inesperado");
       return;
     }
 
-    // Validar coincidencia de contraseñas
-    if (password != confirm) {
-      _showErrorDialog(
-        "Contraseñas no coinciden",
-        "Las contraseñas ingresadas no son iguales",
-      );
-      return;
-    }
+    if (!mounted) return;
 
-    setState(() => loading = true);
-
-    try {
-      await AuthService().register(email, password);
-      setState(() => loading = false);
-
-      if (!mounted) return;
-
-      // Mostrar diálogo de éxito
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          backgroundColor: cardBgDark,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              Icon(Icons.check_circle, color: primary, size: 28),
-              const SizedBox(width: 10),
-              Text(
-                "¡Cuenta creada!",
-                style: GoogleFonts.spaceGrotesk(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            "Tu cuenta ha sido creada exitosamente. Bienvenido a Recipe Buddy.",
-            style: GoogleFonts.spaceGrotesk(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomePage()),
-                );
-              },
-              child: Text(
-                "Continuar",
-                style: GoogleFonts.spaceGrotesk(
-                  color: primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+    // DIALOGO DE ÉXITO
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: cardBgDark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: primary, size: 28),
+            const SizedBox(width: 10),
+            Text(
+              "¡Cuenta creada!",
+              style: GoogleFonts.spaceGrotesk(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
-      );
-    } catch (e) {
-      setState(() => loading = false);
-      _showErrorDialog("Error", "No se pudo crear la cuenta: $e");
-    }
+        content: Text(
+          "Tu cuenta ha sido creada exitosamente. Bienvenido a Recipe Buddy.",
+          style: GoogleFonts.spaceGrotesk(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const HomePage()),
+              );
+            },
+            child: Text(
+              "Continuar",
+              style: GoogleFonts.spaceGrotesk(
+                color: primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  void _showErrorDialog(String title, String message) {
+  void _showError(String title, String msg) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (_) => AlertDialog(
         backgroundColor: cardBgDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
@@ -154,7 +140,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ],
         ),
         content: Text(
-          message,
+          msg,
           style: GoogleFonts.spaceGrotesk(color: Colors.white70),
         ),
         actions: [
@@ -175,6 +161,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+
     return Stack(
       children: [
         Scaffold(
@@ -186,7 +174,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   const SizedBox(height: 40),
 
-                  // ICONO SUPERIOR
+                  // ICONO
                   Container(
                     width: 100,
                     height: 100,
@@ -194,16 +182,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       color: primary.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.restaurant_menu,
-                      color: primary,
-                      size: 50,
-                    ),
+                    child: Icon(Icons.restaurant_menu, color: primary, size: 50),
                   ),
 
                   const SizedBox(height: 32),
 
-                  // TITULO
                   Text(
                     "Crear Cuenta",
                     style: GoogleFonts.spaceGrotesk(
@@ -215,8 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   const SizedBox(height: 40),
 
-                  // EMAIL
-                  _buildLabeledInput(
+                  _buildInput(
                     label: "Correo electrónico",
                     controller: emailController,
                     hint: "Introduce tu correo electrónico",
@@ -225,14 +207,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   const SizedBox(height: 24),
 
-                  // PASSWORD
-                  _buildLabeledInput(
+                  _buildInput(
                     label: "Contraseña",
                     controller: passwordController,
                     hint: "Introduce tu contraseña",
                     icon: Icons.lock_outlined,
                     obscure: !showPassword,
-                    suffixIcon: GestureDetector(
+                    suffix: GestureDetector(
                       onTap: () => setState(() => showPassword = !showPassword),
                       child: Icon(
                         showPassword ? Icons.visibility : Icons.visibility_off,
@@ -243,17 +224,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   const SizedBox(height: 24),
 
-                  // CONFIRM PASSWORD
-                  _buildLabeledInput(
-                    label: "Confirmar contraseña",
+                  _buildInput(
+                    label: "Confirmar Contraseña",
                     controller: passwordConfirmController,
                     hint: "Confirma tu contraseña",
                     icon: Icons.lock_outlined,
                     obscure: !showConfirmPassword,
-                    suffixIcon: GestureDetector(
-                      onTap: () => setState(() => showConfirmPassword = !showConfirmPassword),
+                    suffix: GestureDetector(
+                      onTap: () =>
+                          setState(() => showConfirmPassword = !showConfirmPassword),
                       child: Icon(
-                        showConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                        showConfirmPassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                         color: Colors.white.withOpacity(0.6),
                       ),
                     ),
@@ -261,11 +244,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   const SizedBox(height: 40),
 
-                  // REGISTER BUTTON
                   SizedBox(
                     height: 56,
                     width: double.infinity,
                     child: ElevatedButton(
+                      onPressed: auth.loading ? null : _register,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
                         shape: RoundedRectangleBorder(
@@ -273,7 +256,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         elevation: 0,
                       ),
-                      onPressed: loading ? null : _register,
                       child: Text(
                         "Crear Cuenta",
                         style: GoogleFonts.spaceGrotesk(
@@ -287,16 +269,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   const SizedBox(height: 24),
 
-                  // LOGIN LINK
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         "¿Ya tienes una cuenta? ",
-                        style: GoogleFonts.spaceGrotesk(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
+                        style: GoogleFonts.spaceGrotesk(color: Colors.white70),
                       ),
                       GestureDetector(
                         onTap: () {
@@ -310,7 +288,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: GoogleFonts.spaceGrotesk(
                             color: primary,
                             fontWeight: FontWeight.w600,
-                            fontSize: 14,
                           ),
                         ),
                       ),
@@ -324,42 +301,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
 
-        // LOADING OVERLAY
-        if (loading)
-          Container(
-            color: Colors.black.withOpacity(0.7),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(primary),
-                    strokeWidth: 3,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    "Creando tu cuenta...",
-                    style: GoogleFonts.spaceGrotesk(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        if (auth.loading) _loadingOverlay(),
       ],
     );
   }
 
-  Widget _buildLabeledInput({
+  Widget _buildInput({
     required String label,
     required TextEditingController controller,
     required String hint,
     required IconData icon,
     bool obscure = false,
-    Widget? suffixIcon,
+    Widget? suffix,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,44 +330,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
           decoration: BoxDecoration(
             color: cardBgDark,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
           child: TextField(
             controller: controller,
             obscureText: obscure,
-            style: GoogleFonts.spaceGrotesk(
-              color: Colors.white,
-              fontSize: 16,
-            ),
+            style: GoogleFonts.spaceGrotesk(color: Colors.white),
             decoration: InputDecoration(
+              prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.5)),
+              suffixIcon: suffix,
               hintText: hint,
-              hintStyle: GoogleFonts.spaceGrotesk(
-                color: Colors.white.withOpacity(0.4),
-                fontSize: 15,
-              ),
+              hintStyle:
+                  TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 15),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 18,
                 vertical: 18,
               ),
-              prefixIcon: Icon(
-                icon,
-                color: Colors.white.withOpacity(0.5),
-                size: 22,
-              ),
-              suffixIcon: suffixIcon != null
-                  ? Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: suffixIcon,
-                    )
-                  : null,
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _loadingOverlay() {
+    return Container(
+      color: Colors.black.withOpacity(0.7),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation(primary),
+              strokeWidth: 3,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "Creando tu cuenta...",
+              style: GoogleFonts.spaceGrotesk(color: Colors.white),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -424,5 +382,5 @@ class _RegisterScreenState extends State<RegisterScreen> {
     passwordController.dispose();
     passwordConfirmController.dispose();
     super.dispose();
-}
+  }
 }
